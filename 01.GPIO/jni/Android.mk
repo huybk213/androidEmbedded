@@ -9,7 +9,12 @@ LOCAL_LDLIBS := \
 	-ljnigraphics \
 
 LOCAL_SRC_FILES := \
-	gpio.c \
+    gpio.c \
+	core.c \
+	helpers.c \
+	misc.c \
+	iter.c \
+	ctxless.c \
 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)
 
