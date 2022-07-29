@@ -14,7 +14,10 @@
         android:theme="@style/Theme.MyApplication"
         tools:targetApi="31">
         <activity
-            android:name="com.example.gpio.Gpio"
+            android:name=".MainActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Gpio.Gpio"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

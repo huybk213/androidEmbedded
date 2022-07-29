@@ -1,33 +1,41 @@
 package com.example.gpio;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.os.Bundle;
 
+import com.example.gpio.Gpio.Gpio;
 import com.example.myapplication.R;
 // Java_com_binhanh_periph_gpio_Gpio_
 import android.util.Log;
 import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.InputStream;
 import java.io.*;
+public class MainActivity extends AppCompatActivity {
 
-public class Gpio extends AppCompatActivity {
-    /* this is used to load the 'hello-jni' library on application
-     * startup. The library has already been unpacked into
-     * /data/data/com.example.hellojni/lib/libhello-jni.so at
-     * installation time by the package manager.
-     */
     static {
         System.loadLibrary("gpio");
     }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main3);
+    }
+
     public static final int baCamBuzzerPin = 942;
     public static final int orangePi3PC11Pin = 75;      // 32* ('leter' - 'A') + num
     private static final String TAG = "MainActivityGpio";
+    Gpio mMyGpio = new Gpio();
+//    mGpio.new(75);
+
 
     private class MyRunnable implements Runnable{
         private int counter = 0;
+
+//        private long gpio75 = mGpio.new createIO(75);
         @Override
         public void run() {
+            mMyGpio.newIO(75);
             if (!runShellCmd("chmod 777 /dev/gpiochip*"))
             {
                 Log.e(TAG, "Set permission for gpio failed\r\n");
@@ -37,6 +45,7 @@ public class Gpio extends AppCompatActivity {
                 Log.i(TAG, "Set permission for gpio success\r\n");
             }
             int value = 0;
+//            setOutputMode(gpio75);
             while (true) {
                 try {
 //                    int gpioCurrentValue = getGpioStatus(orangePi3PC11Pin);
@@ -55,10 +64,11 @@ public class Gpio extends AppCompatActivity {
 //                        break;
 //                    }
                     value = value > 0 ? 0 : 1;
-                    setGpioStatus(orangePi3PC11Pin, value);
+//                    setGpioStatus(gpio75, value);
                     Log.i(TAG, "GPIO=" + value);
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
+//                    deleteIO(gpio75);
                     e.printStackTrace();
                 }
             }
@@ -93,12 +103,4 @@ public class Gpio extends AppCompatActivity {
         return true;
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        new Thread(new MyRunnable()).start();
-    }
-    public native int setGpioStatus(int gpioId, int gpioStatus);
-    public native int getGpioStatus(int gpioId);
 }

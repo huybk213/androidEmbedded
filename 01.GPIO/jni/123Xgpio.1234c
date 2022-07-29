@@ -142,3 +142,16 @@ jint Java_com_example_gpio_Gpio_setGpioStatus
 	return ret;
 }
 
+/*
+* Java_com_binhanh_periph_gpio_Gpio_setGpioStatus
+* params: (I)gpioId, (I)gpioStatus
+* return: (I)
+*/
+jint Java_com_example_gpio_Gpio_setMode
+	(JNIEnv *env, jobject clazz, jint gpioId)
+{
+	int ret = setGpioStatus(gpioId, gpioStatus);
+	return ret;
+}
+
+
