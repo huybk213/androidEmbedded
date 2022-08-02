@@ -20,23 +20,23 @@
     // env->ThrowNew(clazz, msg);
 // }
 
-/*
-* write GPIO
-* params: gpioId, newValue
-* return: 0: success, otherwise failed
-*/
-static int setGpioStatus(jint gpioId, jint gpioStatus)
+struct gpiod_chip *chip;
+struct gpiod_line *lineIO;
+const char *chipname = "gpiochip0";
+
+static int openGpio(jint gpioId, jint mode)
 {
     const char *chipname = "gpiochip0";
     // Orangepi3 gpiochip0 (0-64)
-    if (gpioId > 64)
+    if (gpioId >= 64 && gpioId <= 256)
     {
         chipname = "gpiochip1";
     }
-    LOGI("Select %s, pin %d, value %d\r", chipname, gpioId, gpioStatus);
+    // else if (gpioId > 256)
+    //   {
+    //        chipname = "gpiochip2";
+    //  }
 
-    struct gpiod_chip *chip;
-    struct gpiod_line *lineIO;
     int ret = -1, val;
 
     // Open GPIO chip
@@ -46,22 +46,36 @@ static int setGpioStatus(jint gpioId, jint gpioStatus)
 		goto end;
 	}
 
+    // LOGI("Max number of line %d\r\n", gpiod_chip_num_lines(chip));
     // Open GPIO lines
     lineIO = gpiod_chip_get_line(chip, gpioId);
     if (!lineIO) {
-		LOGE("Get line failed\r\n");
+		LOGE("[%s] Get line on pin %d failed, error %d - %s\r\n", __FUNCTION__, gpioId, errno, strerror(errno));
 		goto close_chip;
 	}
 
-    // Open LED lines for output
-    ret = gpiod_line_request_output(lineIO, "GPIO_JNI", gpioStatus);
-    if (ret < 0) {
-        LOGE("Request line as output failed %d\r\n", errno);
-        goto release_line;
+    if (mode == 0) {
+        // Open IO lines for output
+        ret = gpiod_line_request_output(lineIO, "GPIO_JNI", 0);
+        if (ret < 0) {
+            LOGE("Request line %d as output failed %d\r\n", gpioId, errno);
+            goto release_line;
+        }
+        else {
+            gpiod_line_set_value(lineIO, 0);
+        }
     }
-    gpiod_line_set_value(lineIO, gpioStatus);
+    else if (mode == 0) {
+        // Open IO lines for input
+        ret = gpiod_line_request_input(lineIO, "GPIO_JNI");
+        if (ret < 0) {
+            LOGE("Request line %d as input failed %d\r\n", gpioId, errno);
+            goto release_line;
+        }
+    }
+
     ret = 0;
-    LOGI("Set gpio success, release and close chip\r\n");
+    return 0;
 
 release_line:
     // Release lines and chip
@@ -69,7 +83,43 @@ release_line:
 close_chip:
     gpiod_chip_close(chip);
 end:
-    LOGI("Set gpio : exit\r\n");
+    return ret;
+}
+
+static int closeGpio(int gpioId) {
+    int err = 0;
+    gpiod_line_release(lineIO);
+    gpiod_chip_close(chip);
+    return 0;
+}
+
+static int setMode(jint gpioId, jint mode)
+{
+    int ret = -1;
+    if (mode == 0) {
+        ret = gpiod_line_request_output(lineIO, "GPIO_JNI", 0);
+    } 
+    else {
+        ret = gpiod_line_request_input(lineIO, "GPIO_JNI");
+    }
+
+    return ret;
+}
+
+/*
+* write GPIO
+* params: gpioId, newValue
+* return: 0: success, otherwise failed
+*/
+static int setGpioStatus(jint gpioId, jint gpioStatus)
+{
+    int ret = -1, val;
+
+    ret = gpiod_line_set_value(lineIO, gpioStatus);
+    if (ret == -1)
+    {
+        LOGI("Set gpio failed, error %d - %s\r\n", errno, strerror(errno));
+    }
     return ret;
 }
 
@@ -80,47 +130,34 @@ end:
 */
 static int getGpioStatus(jint gpioId)
 {
-    const char *chipname = "gpiochip0";
-    struct gpiod_chip *chip;
-    struct gpiod_line *lineIO;
-    int val = -1;
-
-    // Open GPIO chip
-    // Orangepi3 gpiochip0 (0-64)
-    if (gpioId > 64)
-    {
-        chipname = "gpiochip1";
-    }
-    chip = gpiod_chip_open_by_name(chipname);
-    if (!chip) {
-		LOGE("Open chip %s io %d failed, error %d, mean %s\r\n", chipname, gpioId, errno, strerror(errno));
-		goto end;
-	}
-
-    // Open GPIO lines
-    lineIO = gpiod_chip_get_line(chip, gpioId);
-    if (!lineIO) {
-		LOGE("Get %s line %d failed, error %d, mean %s\r\n", chipname, gpioId, errno, strerror(errno));
-		goto close_chip;
-	}
-
-//    // Open switch line for input
-//    gpiod_line_request_input(lineIO, "gpio_state");
+    int val;
     val = gpiod_line_get_value(lineIO);
-    LOGE("GPIO%d = %d\r\n", gpioId, val);
     if (val == -1)
     {
         LOGE("GPIO get line value, error no %d, mean %s\r\n", errno, strerror(errno));
     }
-
-    // Release lines and chip
-    gpiod_line_release(lineIO);
-close_chip:
-    gpiod_chip_close(chip);
-end:
+    else
+    {
+        LOGD("GPIO%d = %d\r\n", gpioId, val);
+    }
     return val;
 }
 
+jint Java_com_example_gpio_Gpio_openGpio
+	(JNIEnv *env, jobject clazz, jint gpioId, jint mode)
+{
+	//LOGI("getGpioStatus %d", gpioId);
+	int ret = openGpio(gpioId, mode);
+	return ret;
+}
+
+jint Java_com_example_gpio_Gpio_closeGpio
+	(JNIEnv *env, jobject clazz, jint gpioId)
+{
+	//LOGI("getGpioStatus %d", gpioId);
+	int ret = closeGpio(gpioId);
+	return ret;
+}
 
 jint Java_com_example_gpio_Gpio_getGpioStatus
 	(JNIEnv *env, jobject clazz, jint gpioId)
@@ -139,6 +176,18 @@ jint Java_com_example_gpio_Gpio_setGpioStatus
 	(JNIEnv *env, jobject clazz, jint gpioId, jint gpioStatus)
 {
 	int ret = setGpioStatus(gpioId, gpioStatus);
+	return ret;
+}
+
+/*
+* Java_com_binhanh_periph_gpio_Gpio_setGpioStatus
+* params: (I)gpioId, (I)gpioStatus
+* return: (I)
+*/
+jint Java_com_example_gpio_Gpio_setMode
+	(JNIEnv *env, jobject clazz, jint gpioId, jint mode)
+{
+	int ret = setMode(gpioId, mode);
 	return ret;
 }
 
