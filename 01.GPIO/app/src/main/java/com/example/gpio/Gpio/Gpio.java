@@ -1,7 +1,4 @@
 package com.example.gpio.Gpio;
-
-
-
 public class Gpio {
     static {
         System.loadLibrary("gpio");
