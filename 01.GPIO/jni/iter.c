@@ -13,7 +13,7 @@
 
 struct gpiod_chip_iter {
 	struct gpiod_chip **chips;
-	unsigned int num_chips;
+	unsigned int numChips;
 	unsigned int offset;
 };
 
@@ -41,40 +41,40 @@ struct gpiod_chip_iter *gpiod_chip_iter_new(void)
 {
 	struct gpiod_chip_iter *iter;
 	struct dirent **dirs;
-	int i, num_chips;
+	int i, numChips;
 
-	num_chips = scandir("/dev", &dirs, dir_filter, alphasort);
-	if (num_chips < 0)
+	numChips = scandir("/dev", &dirs, dir_filter, alphasort);
+	if (numChips < 0)
 		return NULL;
 
 	iter = malloc(sizeof(*iter));
 	if (!iter)
 		goto err_free_dirs;
 
-	iter->num_chips = num_chips;
+	iter->numChips = numChips;
 	iter->offset = 0;
 
-	if (num_chips == 0) {
+	if (numChips == 0) {
 		iter->chips = NULL;
 		return iter;
 	}
 
-	iter->chips = calloc(num_chips, sizeof(*iter->chips));
+	iter->chips = calloc(numChips, sizeof(*iter->chips));
 	if (!iter->chips)
 		goto err_free_iter;
 
-	for (i = 0; i < num_chips; i++) {
+	for (i = 0; i < numChips; i++) {
 		iter->chips[i] = gpiod_chip_open_by_name(dirs[i]->d_name);
 		if (!iter->chips[i])
 			goto err_close_chips;
 	}
 
-	free_dirs(&dirs, num_chips);
+	free_dirs(&dirs, numChips);
 
 	return iter;
 
 err_close_chips:
-	for (i = 0; i < num_chips; i++) {
+	for (i = 0; i < numChips; i++) {
 		if (iter->chips[i])
 			gpiod_chip_close(iter->chips[i]);
 	}
@@ -85,14 +85,14 @@ err_free_iter:
 	free(iter);
 
 err_free_dirs:
-	free_dirs(&dirs, num_chips);
+	free_dirs(&dirs, numChips);
 
 	return NULL;
 }
 
 void gpiod_chip_iter_free(struct gpiod_chip_iter *iter)
 {
-	if (iter->offset > 0 && iter->offset < iter->num_chips)
+	if (iter->offset > 0 && iter->offset < iter->numChips)
 		gpiod_chip_close(iter->chips[iter->offset - 1]);
 	gpiod_chip_iter_free_noclose(iter);
 }
@@ -101,7 +101,7 @@ void gpiod_chip_iter_free_noclose(struct gpiod_chip_iter *iter)
 {
 	unsigned int i;
 
-	for (i = iter->offset; i < iter->num_chips; i++) {
+	for (i = iter->offset; i < iter->numChips; i++) {
 		if (iter->chips[i])
 			gpiod_chip_close(iter->chips[i]);
 	}
@@ -124,7 +124,7 @@ struct gpiod_chip *gpiod_chip_iter_next(struct gpiod_chip_iter *iter)
 
 struct gpiod_chip *gpiod_chip_iter_next_noclose(struct gpiod_chip_iter *iter)
 {
-	return iter->offset < (iter->num_chips)
+	return iter->offset < (iter->numChips)
 					? iter->chips[iter->offset++] : NULL;
 }
 

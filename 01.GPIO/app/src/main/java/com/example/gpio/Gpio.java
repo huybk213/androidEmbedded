@@ -14,7 +14,8 @@ public class Gpio {
         System.loadLibrary("gpio");
     }
 
-    static private  int mIoNumber;
+    private int mIoNumber;
+    private long mIoPtr;
     gpioMode mMode;
 
     public Gpio(int number, gpioMode mode) {
@@ -38,7 +39,8 @@ public class Gpio {
 //        else if (mMode == gpioMode.MODE_ANALOG_INPUT) {
 //            mode = 2;
 //        }
-        if (openGpio(mIoNumber, mode) == -1) {
+        mIoPtr = openGpio(mIoNumber, mode);
+        if (mIoPtr == 0) {
             Log.e(TAG, "Open Gpio " + mIoNumber + " failed\r\n");
             return -1;
         } else {
@@ -52,7 +54,7 @@ public class Gpio {
         if (mMode == gpioMode.MODE_INPUT) {
             tmp = 1;
         }
-        if (setMode(mIoNumber, tmp) != -1) {
+        if (setMode(mIoPtr, tmp) != -1) {
             mMode = mode;
             return 0;
         }
@@ -67,25 +69,25 @@ public class Gpio {
 
     public int writeOutput(int value)
     {
-        return setGpioStatus(mIoNumber, value);
+        return setGpioStatus(mIoPtr, value);
     }
 
     public int readOutput(int value)
     {
-        return getGpioStatus(mIoNumber);
+        return getGpioStatus(mIoPtr);
     }
 
     public int readInput()
     {
-        return getGpioStatus(mIoNumber);
+        return getGpioStatus(mIoPtr);
     }
 
     // C
-    public native int setGpioStatus(int gpioObj, int gpioStatus);
-    public native int getGpioStatus(int gpioObj);
+    public native int setGpioStatus(long ioObj, int gpioStatus);
+    public native int getGpioStatus(long ioObj);
 
-    public native int setMode(int gpioId, int mode);
-    public native int openGpio(int gpioId, int mode);
-    public native int closeGpio(int gpioId);
+    public native int setMode(long ioObj, int mode);
+    public native long openGpio(int gpioId, int mode);
+    public native int closeGpio(long ioObj);
     public native void deleteIO(long gpioObj);
 }
