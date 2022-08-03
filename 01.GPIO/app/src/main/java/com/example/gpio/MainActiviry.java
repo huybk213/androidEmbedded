@@ -22,12 +22,13 @@ public class MainActiviry extends AppCompatActivity {
     }
     public static final int orangePi3LstPd22Pin = 118;      // 32* ('leter' - 'A') + num
     public static final int orangePi3LstPd18Pin = 114;
+    public static final int orangePi3LstPd16Pin = 112;
     private static final String TAG = "MainActivityGpio";
     Gpio gpioPD22; // = new Gpio(orangePi3PC11Pin);
     Gpio gpioPD18;
+    Gpio gpioPD16;
 
     private class MyRunnable implements Runnable{
-        private int counter = 0;
         @Override
         public void run() {
             if (!runShellCmd("chmod 777 /dev/gpiochip*"))
@@ -41,26 +42,33 @@ public class MainActiviry extends AppCompatActivity {
 
             gpioPD22 = new Gpio(orangePi3LstPd22Pin, Gpio.gpioMode.MODE_OUTPUT);
             gpioPD18 = new Gpio(orangePi3LstPd18Pin, Gpio.gpioMode.MODE_INPUT);
+            gpioPD16 = new Gpio(orangePi3LstPd16Pin, Gpio.gpioMode.MODE_OUTPUT);
 
             while (true) {
                 try {
-                    int gpioCurrentValue = gpioPD22.readOutput(orangePi3LstPd22Pin);
+                    int gpioCurrentValue;
+                    gpioCurrentValue = gpioPD22.readOutput();
                     if (gpioCurrentValue != -1) {
                         gpioPD22.writeOutput(gpioCurrentValue > 0 ? 0 : 1);
-                        Log.i(TAG, "GPIO22=" + gpioPD22.readOutput(orangePi3LstPd22Pin));
-//                        Log.i(TAG, "GPIO18=" + gpioPD18.readInput());
-                        Thread.sleep(2000);
-                        counter++;
-                        if (counter > 10000) {
-                            gpioPD22.writeOutput(0);
-                            gpioPD22.releaseGpio();
-                            break;
-                        }
                     }
                     else {
                         Log.e(TAG, "Get orange pi gpio " + orangePi3LstPd22Pin + " error");
                         break;
                     }
+
+                    gpioCurrentValue = gpioPD16.readOutput();
+                    if (gpioCurrentValue != -1) {
+                        gpioPD16.writeOutput(gpioCurrentValue > 0 ? 0 : 1);
+                    }
+                    else {
+                        break;
+                    }
+
+
+                    Log.i(TAG, "GPIO16=" + gpioPD16.readOutput());
+                    Log.i(TAG, "GPIO18=" + gpioPD18.readInput());
+                    Log.i(TAG, "GPIO22=" + gpioPD22.readOutput());
+                    Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

@@ -6,7 +6,6 @@ public class Gpio {
     public enum gpioMode {
         MODE_OUTPUT,
         MODE_INPUT,
-//        MODE_ANALOG_INPUT
     }
 
     static {
@@ -72,7 +71,7 @@ public class Gpio {
         return setGpioStatus(mIoPtr, value);
     }
 
-    public int readOutput(int value)
+    public int readOutput()
     {
         return getGpioStatus(mIoPtr);
     }

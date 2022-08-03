@@ -78,8 +78,7 @@ static long openGpio(jint gpioId, jint mode)
     dev->chipname = chipname;
     dev->chip = (void*)0;
 
-    // check if chip is opened
-    int first_free_index = -1;
+    // check if chip is already opened
     for (int i = 0; i < numChips; i++) {
         if (mMaxnumberOfChipInfo[i].chipname
             && strlen(mMaxnumberOfChipInfo[i].chipname)
@@ -129,14 +128,16 @@ static long openGpio(jint gpioId, jint mode)
         }
     }
 
-    for (int i = 0; i < numChips; i++) {
-        if (mMaxnumberOfChipInfo[i].lineIO == 0) {
-            LOGI("Insert new chipname [%u] %s", i , chipname);
-            memcpy(&mMaxnumberOfChipInfo[i], dev, sizeof(gpioInfo_t));
-            break;
+    // Insert new chip to port
+    if (insertNewChip) {
+        for (int i = 0; i < numChips; i++) {
+            if (mMaxnumberOfChipInfo[i].lineIO == 0) {
+                LOGI("Insert new chipname [%u] %s", i , chipname);
+                memcpy(&mMaxnumberOfChipInfo[i], dev, sizeof(gpioInfo_t));
+                break;
+            }
         }
     }
-
     return (long)dev;
 
 release_line:
@@ -197,6 +198,8 @@ static int getGpioStatus(gpioInfo_t* info)
     val = gpiod_line_get_value(info->lineIO);
     if (val == -1) {
         LOGE("GPIO get line %d value, error no %d, mean %s\r\n", info->id, errno, strerror(errno));
+    } else {
+    //    LOGI("Line %d, value %d\r\n", info->id, val);
     }
     return val;
 }
