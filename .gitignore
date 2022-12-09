@@ -1,0 +1,4 @@
+﻿*.d
+gpioChip/obj/local/armeabi-v7a/objs/gpio/core.o
+*.o
+gpioChip/.vscode
